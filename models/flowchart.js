@@ -16,13 +16,13 @@ const FlowChartSchema = new Schema({
     aiModel: {
         type: String,
         required: true,
-        enum: ['Model1', 'Model2', 'Model3'],
+        enum: ['Gemini', 'Model 2', 'Model 3'],
     },
     textOrMermaid: {
         type: String,
         required: true,
     },
-    mermaidFile:{
+    mermaidString:{
         type: String,
         required: true,
     },
@@ -31,7 +31,6 @@ const FlowChartSchema = new Schema({
         default: Date.now,
     },
 });
-
 
 const FlowChart = mongoose.model('FlowChart', FlowChartSchema);
 
