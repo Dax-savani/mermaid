@@ -44,7 +44,13 @@ const getUserData = async (accessToken) => {
 
 const linkedInCallback = async (req, res) => {
     try {
-        const { code } = req.query;
+        const { code ,error} = req.query;
+        if (error) {
+            return res.status(400).json({
+                success: false,
+                error: `LinkedIn Error: ${error}`,
+            });
+        }
         const accessToken = await getAccessToken(code);
 
         const userData = await getUserData(accessToken.access_token);
