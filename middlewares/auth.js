@@ -9,8 +9,7 @@ async function auth(req, res, next) {
         authToken = authToken.split(" ")[1];
     }
     const user = await verifyToken(authToken);
-    const verifiedUser = await User.findById(user.id);
-
+    const verifiedUser = await User.findOne({email: user.email});
     if (!verifiedUser) return res.status(401).json({message: "UnAuthorised: Auth token is invalid!", status: 401});
 
     req.user = verifiedUser;
