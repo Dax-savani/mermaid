@@ -1,12 +1,9 @@
-const express = require('express');
-const {handleCreateUser, handleLoginCtrl, handleGetMe} = require('../controllers/user');
-const {auth} = require("../middlewares/auth");
-const router = express.Router();
+const express = require("express");
+const { linkedInCallback, getUser } = require("../controllers/user");
 
-router.post('/register', handleCreateUser);
+const AuthRoutes = express.Router();
 
-router.post('/login', handleLoginCtrl);
+AuthRoutes.get("/callback", linkedInCallback);
+AuthRoutes.get("/get-user", getUser);
 
-router.get('/me', auth, handleGetMe);
-
-module.exports = router;
+module.exports = AuthRoutes;

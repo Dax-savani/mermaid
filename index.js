@@ -9,7 +9,8 @@ const PORT = process.env.PORT || 4000;
 const cookieParser = require('cookie-parser')
 const cors = require('cors');
 //routes
-const authRouter = require("./routes/auth");
+const AuthRoutes = require("./routes/auth");
+const flowChartRouter = require("./routes/flowchart");
 //connection to database
 connectionDB(process.env.DB_CONNECTION_STRING);
 
@@ -25,7 +26,8 @@ app.get("/", (req, res) => {
     res.send("Hello From Server");
 });
 
-app.use("/api/user", authRouter);
+app.use("/api/linkedin", AuthRoutes);
+app.use("/api/",auth, flowChartRouter);
 
 app.use(notFound);
 app.use(errorHandler);

@@ -1,104 +1,114 @@
 const User = require("../models/user");
-const { generateToken } = require("../auth/jwt");
-const asyncHandler = require("express-async-handler");
+const jwt = require("jsonwebtoken");
+const fetch = require("node-fetch");
+const {generateToken} = require("../auth/jwt");
 
-
-const handleCreateUser = asyncHandler(async (req, res) => {
-    const { email, contact } = req.body;
-
-    const userExist = await User.exists({
-        $or: [{ email }, { contact }],
+const getAccessToken = async (code) => {
+    const body = new URLSearchParams({
+        grant_type: "authorization_code",
+        code: code,
+        client_id: process.env.LINKEDIN_CLIENT_ID,
+        client_secret: process.env.LINKEDIN_CLIENT_SECRET,
+        redirect_uri: "http://localhost:8080/api/linkedin/callback",
     });
 
-    if (userExist) {
-        res.status(400);
-        throw new Error("User already exists");
-    }
-
-    const newUser = await User.create(req.body);
-
-    res.status(201).json({
-        data: {
-            id: newUser._id,
-            first_name: newUser.first_name,
-            last_name: newUser.last_name,
-            email: newUser.email,
-            contact: newUser.contact,
-            dob: newUser.dob,
+    const response = await fetch("https://www.linkedin.com/oauth/v2/accessToken", {
+        method: "POST",
+        headers: {
+            "Content-type": "application/x-www-form-urlencoded",
         },
-        message: "User registered successfully",
-        status: 201,
+        body: body.toString(),
     });
-});
 
-
-const handleLoginCtrl = asyncHandler(async (req, res) => {
-    const { email, password } = req.body;
-
-    const findUser = await User.findOne({ email });
-
-    if (!findUser) {
-        res.status(404);
-        throw new Error("User not found");
+    if (!response.ok) {
+        throw new Error(response.statusText);
     }
 
-    const isMatch = await findUser.isPasswordMatched(password);
+    return await response.json();
+};
 
-    if (!isMatch) {
-        res.status(401);
-        throw new Error("Invalid credentials");
-    }
-
-    const authToken = generateToken(findUser._id);
-    const user = {
-        id: findUser._id,
-        first_name: findUser.first_name,
-        last_name: findUser.last_name,
-        dob: findUser.dob,
-        contact: findUser.contact,
-        email: findUser.email,
-    };
-
-    res.status(200).json({
-        data: user,
-        token: authToken,
-        message: "Logged in successfully",
-        status: 200,
-    });
-});
-
-
-const handleGetMe = asyncHandler(async (req, res) => {
-    const userId = req.user?._id;
-
-    if (!userId) {
-        res.status(401);
-        throw new Error("Not authorized, token failed");
-    }
-
-    const user = await User.findById(userId).select("-password");
-
-    if (!user) {
-        res.status(404);
-        throw new Error("User not found");
-    }
-
-    res.status(200).json({
-        data: {
-            id: user._id,
-            first_name: user.first_name,
-            last_name: user.last_name,
-            dob: user.dob,
-            contact: user.contact,
-            email: user.email,
+const getUserData = async (accessToken) => {
+    const response = await fetch("https://api.linkedin.com/v2/userinfo", {
+        method: "GET",
+        headers: {
+            Authorization: `Bearer ${accessToken}`,
         },
-        message: "User details retrieved successfully",
-        status: 200,
     });
-});
+
+    if (!response.ok) {
+        throw new Error(response.statusText);
+    }
+
+    return await response.json();
+};
+
+const linkedInCallback = async (req, res) => {
+    try {
+        const { code } = req.query;
+        const accessToken = await getAccessToken(code);
+
+        const userData = await getUserData(accessToken.access_token);
+        if (!userData) {
+            return res.status(500).json({
+                success: false,
+                error: "Unable to fetch user data",
+            });
+        }
+
+        let user = await User.findOne({ email: userData.email });
+
+        if (!user) {
+            user = new User({
+                name: userData.name,
+                email: userData.email,
+                phone: userData?.phone,
+                avatar: userData?.picture,
+            });
+            await user.save();
+        }
+
+        const token = generateToken({ name: user.name, email: user.email, avatar: user.avatar })
+
+        res.cookie("token", token, {
+            httpOnly: false,
+            secure: false,
+            sameSite: "Lax",
+        });
+
+        res.redirect("http://localhost:3000");
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message,
+        });
+    }
+};
+
+const getUser = async (req, res) => {
+    const token = req.cookies.token;
+
+    if (!token) {
+        return res.status(403).json({
+            success: false,
+            message: "No token provided",
+        });
+    }
+
+    try {
+        const user = jwt.verify(token, process.env.JWT_SECRET);
+        res.status(200).json({
+            success: true,
+            user,
+        });
+    } catch (error) {
+        res.status(403).json({
+            success: false,
+            message: "Invalid token",
+        });
+    }
+};
 
 module.exports = {
-    handleCreateUser,
-    handleLoginCtrl,
-    handleGetMe,
+    linkedInCallback,
+    getUser,
 };
