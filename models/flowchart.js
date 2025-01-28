@@ -22,7 +22,7 @@ const FlowChartSchema = new Schema({
         type: String,
         required: true,
     },
-    mermaidString:{
+    mermaidFile:{
         type: String,
         required: true,
     },

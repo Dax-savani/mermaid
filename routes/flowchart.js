@@ -7,9 +7,12 @@ const {
     handleUpdateFlowChartById,
     handleDeleteFlowChartById,
 } = require('../controllers/flowchart');
+const multer = require('multer');
+const storage = multer.memoryStorage();
+const upload = multer({storage: storage});
 
 
-flowChartRouter.post('/flowchart', handleCreateFlowChart);
+flowChartRouter.post('/flowchart',upload.any(), handleCreateFlowChart);
 flowChartRouter.get('/flowcharts', handleGetAllFlowCharts);
 flowChartRouter.get('/flowchart/:id', handleGetFlowChartById);
 flowChartRouter.put('/flowchart/:id', handleUpdateFlowChartById);

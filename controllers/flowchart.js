@@ -1,33 +1,76 @@
 const asyncHandler = require('express-async-handler');
-const FlowChart = require('../models/FlowChart');
+const FlowChart = require('../models/flowchart');
+const axios = require('axios');
 
-// Create a FlowChart with req.user._id
+const WHISPER_API_URL = "https://api-inference.huggingface.co/models/openai/whisper-large-v3-turbo";
+const MISTRAL_API_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2";
+
+const HUGGING_FACE_API_KEY = process.env.HUGGING_FACE_API_KEY;
+
+function generateMermaidChart(apiResponseData) {
+    return `
+        graph TD
+        A[Start] --> B[Process API Response]
+        B --> C{Analyze Data}
+        C -->|Audio/Text/Image| D[Generate Mermaid Chart]
+        D --> E[Send to Frontend]
+    `;
+}
+
 const handleCreateFlowChart = asyncHandler(async (req, res) => {
     try {
-        const { selectInputMethod, aiModel, textOrMermaid, mermaidString } = req.body;
+        const file = req.files[0];
+        let apiResponse;
 
-        // Ensure req.user._id exists
-        if (!req.user || !req.user._id) {
-            return res.status(400).json({
-                status: 400,
-                message: 'User not authenticated',
-            });
+        // Check the file type
+        const fileType = file.mimetype.split('/')[0];
+        console.log("File type:", fileType);
+
+        if (fileType === 'audio') {
+            apiResponse = await axios.post(
+                WHISPER_API_URL,
+                file.buffer,
+                {
+                    headers: {
+                        Authorization: `Bearer ${HUGGING_FACE_API_KEY}`,
+                        'Content-Type': 'application/octet-stream',
+                    },
+                }
+            );
+        } else if (fileType === 'text' || fileType === 'image') {
+            const mistralPayload = {
+                inputs: fileType === 'text' ? file.buffer.toString('utf-8') : 'Analyze this image for flowchart data.',
+            };
+
+            apiResponse = await axios.post(
+                MISTRAL_API_URL,
+                mistralPayload,
+                {
+                    headers: {
+                        Authorization: `Bearer ${HUGGING_FACE_API_KEY}`,
+                        'Content-Type': 'application/json',
+                    },
+                }
+            );
+        } else {
+            return res.status(400).json({ message: 'Unsupported file type.' });
         }
 
-        const newFlowChart = new FlowChart({
-            user_id: req.user._id, // Use req.user._id for the user ID
-            selectInputMethod,
-            aiModel,
-            textOrMermaid,
-            mermaidString,
-        });
+        console.log("API response:", apiResponse.data);
 
-        await newFlowChart.save();
+        // Process the response to generate a Mermaid chart string
+        const mermaidChart = generateMermaidChart(apiResponse.data);
+        console.log("mermaidChartmermaidChartmermaidChart :", mermaidChart);
 
         res.status(201).json({
             status: 201,
             message: 'FlowChart created successfully',
-            data: newFlowChart,
+            mermaidChart,
+        });
+
+        res.status(201).json({
+            status: 201,
+            message: 'FlowChart created successfully',
         });
     } catch (error) {
         console.error('Error creating FlowChart:', error.message);
@@ -86,27 +129,18 @@ const handleGetFlowChartById = asyncHandler(async (req, res) => {
     }
 });
 
-// Update FlowChart by ID with req.user._id
 const handleUpdateFlowChartById = asyncHandler(async (req, res) => {
     try {
-        const { selectInputMethod, aiModel, textOrMermaid, mermaidString } = req.body;
-
-        // Ensure req.user._id exists
-        if (!req.user || !req.user._id) {
-            return res.status(400).json({
-                status: 400,
-                message: 'User not authenticated',
-            });
-        }
+        const { selectInputMethod, aiModel, textOrMermaid, mermaidFile } = req.body;
 
         const flowChart = await FlowChart.findByIdAndUpdate(
             req.params.id,
             {
-                user_id: req.user._id, // Use req.user._id for the user ID
+                user_id: req.user._id,
                 selectInputMethod,
                 aiModel,
                 textOrMermaid,
-                mermaidString,
+                mermaidFile,
             },
             { new: true }
         );
@@ -166,3 +200,4 @@ module.exports = {
     handleUpdateFlowChartById,
     handleDeleteFlowChartById,
 };
+
