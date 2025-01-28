@@ -75,7 +75,11 @@ const linkedInCallback = async (req, res) => {
             sameSite: "Lax",
         });
 
-        res.redirect("http://localhost:3000");
+        // res.redirect("http://localhost:3000");
+        res.status(403).json({
+            success: true,
+            message: "Login Successfully",
+        });
     } catch (error) {
         res.status(500).json({
             success: false,
