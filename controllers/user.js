@@ -9,7 +9,7 @@ const getAccessToken = async (code) => {
         code: code,
         client_id: process.env.LINKEDIN_CLIENT_ID,
         client_secret: process.env.LINKEDIN_CLIENT_SECRET,
-        redirect_uri: "https://mermaid-16xw.onrender.com/api/linkedin/callback",
+        redirect_uri: "http://localhost:8080/api/linkedin/callback",
     });
 
     const response = await fetch("https://www.linkedin.com/oauth/v2/accessToken", {
@@ -75,7 +75,7 @@ const linkedInCallback = async (req, res) => {
             sameSite: "None",
         });
 
-        res.redirect(`https://mermaid-fe-lilac.vercel.app/dashboard?token=${token}`)
+        res.redirect(`http://localhost:3000/dashboard`)
     } catch (error) {
         res.status(500).json({
             success: false,

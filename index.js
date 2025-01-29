@@ -16,7 +16,7 @@ connectionDB(process.env.DB_CONNECTION_STRING);
 
 //Middlewares
 app.use(cors({
-    origin: 'https://mermaid-fe-lilac.vercel.app',
+    origin: 'http://localhost:8080',
     credentials: true
 }));
 
