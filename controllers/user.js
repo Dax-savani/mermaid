@@ -70,9 +70,10 @@ const linkedInCallback = async (req, res) => {
         const token = generateToken({ name: user.name, email: user.email, avatar: user.avatar })
 
         res.cookie("token", token, {
-            httpOnly: false,
-            secure: false,
-            sameSite: "Lax",
+            httpOnly: true,
+            secure: true,
+            sameSite: "None",
+            domain: "https://mermaid-16xw.onrender.com",
         });
 
         res.redirect("http://localhost:3000");
