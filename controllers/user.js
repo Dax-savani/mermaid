@@ -74,7 +74,7 @@ const linkedInCallback = async (req, res) => {
             sameSite: "None",
         });
 
-        res.redirect(`http://localhost:3000/dashboard`)
+        res.redirect(`https://mermaid-16xw.onrender.com/dashboard`)
     } catch (error) {
         res.status(500).json({
             success: false,
