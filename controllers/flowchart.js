@@ -1,6 +1,7 @@
 const asyncHandler = require('express-async-handler');
 const FlowChart = require('../models/flowchart');
 const axios = require('axios');
+require('dotenv').config();
 
 const transcribeAudio = async (audioBuffer,huggingToken) => {
     try {
