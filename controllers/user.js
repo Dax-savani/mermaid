@@ -61,7 +61,6 @@ const linkedInCallback = async (req, res) => {
             user = new User({
                 name: userData.name,
                 email: userData.email,
-                phone: userData?.phone,
                 avatar: userData?.picture,
             });
             await user.save();

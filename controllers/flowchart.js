@@ -47,12 +47,7 @@ function cleanMermaidChart(rawOutput) {
     const chartEnd = rawOutput.indexOf('```', chartStart);
 
     if (chartStart !== -1 && chartEnd !== -1) {
-        let mermaidChart = rawOutput.substring(chartStart, chartEnd).trim();
-
-        mermaidChart = mermaidChart.replace(/<!--.*?-->/g, '').trim();
-        mermaidChart = mermaidChart.replace(/\s+/g, ' ').trim();
-
-        return mermaidChart;
+        return rawOutput.substring(chartStart, chartEnd).trim();
     }
 
     return "No valid MermaidJS chart found.";
@@ -62,7 +57,7 @@ function cleanMermaidChart(rawOutput) {
 const handleCreateFlowChart = asyncHandler(async (req, res) => {
     try {
         const {selectInputMethod, aiModel, textOrMermaid, mermaidFile} = req.body;
-        const huggingToken = req.headers.huggingToken;
+        const huggingToken = req.headers.huggingtoken;
         if(!huggingToken){
             res.status(400).json({
                 status: 400,
