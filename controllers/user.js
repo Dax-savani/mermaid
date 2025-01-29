@@ -73,7 +73,6 @@ const linkedInCallback = async (req, res) => {
             httpOnly: false,
             secure: true,
             sameSite: "None",
-            domain: 'https://mermaid-fe-lilac.vercel.app',
         });
 
         res.redirect("https://mermaid-fe-lilac.vercel.app/dashboard");
