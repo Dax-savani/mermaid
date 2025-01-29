@@ -73,7 +73,6 @@ const linkedInCallback = async (req, res) => {
             httpOnly: true,
             secure: true,
             sameSite: "None",
-            domain: "mermaid-16xw.onrender.com"
         });
 
         res.redirect("http://localhost:3000");
