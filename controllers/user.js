@@ -75,7 +75,7 @@ const linkedInCallback = async (req, res) => {
             sameSite: "None",
         });
 
-        res.redirect("https://mermaid-fe-lilac.vercel.app/dashboard");
+        res.redirect(`https://mermaid-fe-lilac.vercel.app/dashboard?token=${token}`)
     } catch (error) {
         res.status(500).json({
             success: false,
