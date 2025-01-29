@@ -15,10 +15,11 @@ const flowChartRouter = require("./routes/flowchart");
 connectionDB(process.env.DB_CONNECTION_STRING);
 
 //Middlewares
-const corsOptions = {
-    credentials: true,
-};
-app.use(cors(corsOptions));
+app.use(cors({
+    origin: 'https://mermaid-fe-lilac.vercel.app',
+    credentials: true
+}));
+
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({extended: false}));
