@@ -70,7 +70,7 @@ const linkedInCallback = async (req, res) => {
         const token = generateToken({ name: user.name, email: user.email, avatar: user.avatar })
 
         res.cookie("token", token, {
-            httpOnly: true,
+            httpOnly: false,
             secure: true,
             sameSite: "None",
         });
