@@ -15,18 +15,9 @@ const flowChartRouter = require("./routes/flowchart");
 connectionDB(process.env.DB_CONNECTION_STRING);
 
 //Middlewares
-
-const allowedOrigins = ["http://localhost:3000", "https://mermaid-fe-lilac.vercel.app/"];
-
 app.use(
     cors({
-        origin: function (origin, callback) {
-            if (!origin || allowedOrigins.includes(origin)) {
-                callback(null, true);
-            } else {
-                callback(new Error("Not allowed by CORS"));
-            }
-        },
+        origin: "*",
         credentials: true,
     })
 );
