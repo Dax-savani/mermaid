@@ -16,7 +16,7 @@ connectionDB(process.env.DB_CONNECTION_STRING);
 
 //Middlewares
 app.use(cors({
-    origin: 'http://localhost:3000',
+    // origin: 'http://localhost:3000',
     credentials: true
 }));
 
