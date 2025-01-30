@@ -116,11 +116,11 @@ const handleCreateFlowChart = asyncHandler(async (req, res) => {
             mermaidChart: mermaidChart,
         });
     } catch (error) {
-        console.error('Error creating FlowChart:', error.message);
+        console.error('Error creating FlowChart:', error);
         res.status(500).json({
             status: 500,
             message: 'Failed to create FlowChart',
-            error: error.message,
+            error: error,
         });
     }
 });
