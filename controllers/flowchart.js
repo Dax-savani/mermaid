@@ -59,8 +59,6 @@ const transcribeAudio = async (audioBuffer, huggingToken) => {
 // }
 
 function cleanMermaidChart(rawOutput) {
-    console.log(rawOutput);
-
     const mermaidStart = rawOutput.indexOf("```mermaid");
     if (mermaidStart === -1) return "No valid MermaidJS chart found.";
 
