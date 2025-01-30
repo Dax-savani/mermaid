@@ -10,17 +10,17 @@ const FlowChartSchema = new Schema({
     },
     selectInputMethod: {
         type: String,
-        required: true,
+        required: false,
         enum: ['Text/README', 'Voice Recording', 'Upload Audio'],
     },
     aiModel: {
         type: String,
         required: true,
-        enum: ['Gemini', 'Model 2', 'Model 3'],
+        enum: ['Gemini'],
     },
     textOrMermaid: {
         type: String,
-        required: true,
+        required: false,
     },
     mermaidString:{
         type: String,

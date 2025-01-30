@@ -3,7 +3,7 @@ const FlowChart = require('../models/flowchart');
 const axios = require('axios');
 require('dotenv').config();
 
-const transcribeAudio = async (audioBuffer,huggingToken) => {
+const transcribeAudio = async (audioBuffer, huggingToken) => {
     try {
         const response = await axios.post(
             process.env.WHISPER_API_URL,
@@ -26,31 +26,50 @@ const transcribeAudio = async (audioBuffer,huggingToken) => {
     }
 };
 
+// function cleanMermaidChart(rawOutput) {
+//     console.log(rawOutput);
+//     const mermaidStart = rawOutput.indexOf('```mermaid');
+//     if (mermaidStart === -1) return "No valid MermaidJS chart found.";
+//     const chartStart = rawOutput.indexOf("graph", mermaidStart)
+//         || rawOutput.indexOf("sequenceDiagram", mermaidStart)
+//         || rawOutput.indexOf("classDiagram", mermaidStart)
+//         || rawOutput.indexOf("pieChart", mermaidStart)
+//         || rawOutput.indexOf("gantt", mermaidStart)
+//         || rawOutput.indexOf("journey", mermaidStart)
+//         || rawOutput.indexOf("stateDiagram", mermaidStart)
+//         || rawOutput.indexOf("erDiagram", mermaidStart)
+//         || rawOutput.indexOf("gitGraph", mermaidStart)
+//         || rawOutput.indexOf("mindmap", mermaidStart)
+//         || rawOutput.indexOf("requirementDiagram", mermaidStart)
+//         || rawOutput.indexOf("flowchart", mermaidStart)
+//         || rawOutput.indexOf("diagram", mermaidStart)
+//         || rawOutput.indexOf("markdown", mermaidStart)
+//         || rawOutput.indexOf("packetDiagram", mermaidStart)
+//         || rawOutput.indexOf("c4Diagram", mermaidStart)
+//         || rawOutput.indexOf("pieDiagram", mermaidStart)
+//         || rawOutput.indexOf("quadrantChart", mermaidStart);
+//
+//     const chartEnd = rawOutput.indexOf('```', chartStart);
+//
+//     if (chartStart !== -1 && chartEnd !== -1) {
+//         return rawOutput.substring(chartStart, chartEnd).trim();
+//     }
+//
+//     return "No valid MermaidJS chart found.";
+// }
+
 function cleanMermaidChart(rawOutput) {
-    const mermaidStart = rawOutput.indexOf('```mermaid');
+    console.log(rawOutput);
+
+    const mermaidStart = rawOutput.indexOf("```mermaid");
     if (mermaidStart === -1) return "No valid MermaidJS chart found.";
 
-    // Look for multiple types of charts: graph, sequenceDiagram, classDiagram, pieChart, gantt, etc.
-    const chartStart = rawOutput.indexOf("graph", mermaidStart)
-        || rawOutput.indexOf("sequenceDiagram", mermaidStart)
-        || rawOutput.indexOf("classDiagram", mermaidStart)
-        || rawOutput.indexOf("pieChart", mermaidStart)
-        || rawOutput.indexOf("gantt", mermaidStart)
-        || rawOutput.indexOf("journey", mermaidStart)
-        || rawOutput.indexOf("stateDiagram", mermaidStart)
-        || rawOutput.indexOf("erDiagram", mermaidStart)
-        || rawOutput.indexOf("gitGraph", mermaidStart)
-        || rawOutput.indexOf("mindmap", mermaidStart)
-        || rawOutput.indexOf("requirementDiagram", mermaidStart)
-        || rawOutput.indexOf("flowchart", mermaidStart);
+    const chartStart = mermaidStart + 10;
 
-    const chartEnd = rawOutput.indexOf('```', chartStart);
+    const chartEnd = rawOutput.indexOf("``", chartStart);
+    if (chartEnd === -1) return "No valid MermaidJS chart found.";
 
-    if (chartStart !== -1 && chartEnd !== -1) {
-        return rawOutput.substring(chartStart, chartEnd).trim();
-    }
-
-    return "No valid MermaidJS chart found.";
+    return rawOutput.substring(chartStart, chartEnd).trim();
 }
 
 
@@ -58,35 +77,42 @@ const handleCreateFlowChart = asyncHandler(async (req, res) => {
     try {
         const {selectInputMethod, aiModel, textOrMermaid, mermaidFile} = req.body;
         const huggingToken = req.headers.huggingtoken;
-        if(!huggingToken){
-            res.status(400).json({
+        if (!huggingToken) {
+            return res.status(400).json({
                 status: 400,
                 message: 'Hugging token not found.',
             });
         }
         const user_id = req.user._id;
 
-        const file = req.files[0];
+        let file = req.files[0];
         let apiResponse;
         let textData = "";
 
-        const fileType = file.mimetype.split('/')[0];
+        if (textOrMermaid) {
+            textData = textOrMermaid;
+        } else if (file) {
+            const fileType = file.mimetype.split('/')[0];
 
-        if (fileType === 'audio') {
-            textData = await transcribeAudio(file.buffer, huggingToken);
-        } else if (fileType === 'text' || fileType === 'image') {
-            textData = file.buffer.toString('utf-8');
-            if (fileType === 'image') {
-                textData = 'Analyze this image for flowchart data.';
+            if (fileType === 'audio') {
+                textData = await transcribeAudio(file.buffer, huggingToken);
+            } else if (fileType === 'text' || fileType === 'image') {
+                textData = file.buffer.toString('utf-8');
+                if (fileType === 'image') {
+                    textData = 'Analyze this image for flowchart data.';
+                }
+            } else {
+                return res.status(400).json({message: 'Unsupported file type.'});
             }
         } else {
-            return res.status(400).json({message: 'Unsupported file type.'});
+            return res.status(400).json({message: 'No input provided.'});
         }
 
         const mistralPayload = {
-            inputs:  `Generate a clean, simple MermaidJS flowchart which is proper in terms of suitable syntax of mermaid js. Return only the MermaidJS code, no additional information or verbose descriptions for the following: 
+            inputs: `Generate a clean, simple MermaidJS flowchart which is proper in terms of suitable syntax of mermaid js. do not make any mistakes in this Return only the MermaidJS code, no additional information or verbose descriptions for the following: 
             ${textData}`,
         };
+
         apiResponse = await axios.post(
             process.env.MISTRAL_API_URL,
             mistralPayload,
@@ -104,7 +130,7 @@ const handleCreateFlowChart = asyncHandler(async (req, res) => {
             aiModel,
             textOrMermaid,
             mermaidFile,
-            mermaidString:mermaidChart,
+            mermaidString: mermaidChart,
             user_id,
         });
 
