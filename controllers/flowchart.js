@@ -73,7 +73,7 @@ function cleanMermaidChart(rawOutput) {
 
 const handleCreateFlowChart = asyncHandler(async (req, res) => {
     try {
-        const { title, selectInputMethod, aiModel, textOrMermaid, mermaidFile } = req.body;
+        const {title, selectInputMethod, aiModel, textOrMermaid, mermaidFile} = req.body;
         const huggingToken = req.headers.huggingtoken;
         if (!huggingToken) {
             return res.status(400).json({
@@ -152,8 +152,9 @@ const handleCreateFlowChart = asyncHandler(async (req, res) => {
 
 const handleGetAllFlowCharts = asyncHandler(async (req, res) => {
     try {
-        const flowCharts = await FlowChart.find({}).sort({createdAt: -1});
-
+        const flowCharts = await FlowChart.find({})
+            .populate('user_id')
+            .sort({createdAt: -1});
         res.status(200).json({
             status: 200,
             message: 'FlowCharts fetched successfully',
@@ -172,7 +173,7 @@ const handleGetAllFlowCharts = asyncHandler(async (req, res) => {
 // Get FlowChart by ID
 const handleGetFlowChartById = asyncHandler(async (req, res) => {
     try {
-        const flowChart = await FlowChart.findById(req.params.id);
+        const flowChart = await FlowChart.findById(req.params.id).populate('user_id').sort({createdAt: -1});
 
         if (!flowChart) {
             return res.status(404).json({
