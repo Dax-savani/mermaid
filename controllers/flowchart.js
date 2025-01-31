@@ -73,7 +73,7 @@ function cleanMermaidChart(rawOutput) {
 
 const handleCreateFlowChart = asyncHandler(async (req, res) => {
     try {
-        const {selectInputMethod, aiModel, textOrMermaid, mermaidFile} = req.body;
+        const { title, selectInputMethod, aiModel, textOrMermaid, mermaidFile } = req.body;
         const huggingToken = req.headers.huggingtoken;
         if (!huggingToken) {
             return res.status(400).json({
@@ -124,6 +124,7 @@ const handleCreateFlowChart = asyncHandler(async (req, res) => {
         const mermaidChart = cleanMermaidChart(apiResponse.data[0].generated_text);
 
         const flowChart = new FlowChart({
+            title, // Add the title field here
             selectInputMethod,
             aiModel,
             textOrMermaid,

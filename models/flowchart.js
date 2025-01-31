@@ -8,6 +8,10 @@ const FlowChartSchema = new Schema({
         required: true,
         ref: 'User',
     },
+    title: {
+        type: String,
+        required: true,
+    },
     selectInputMethod: {
         type: String,
         required: false,
@@ -26,11 +30,7 @@ const FlowChartSchema = new Schema({
         type: String,
         required: true,
     },
-    createdAt: {
-        type: Date,
-        default: Date.now,
-    },
-});
+},{timestamps: true});
 
 const FlowChart = mongoose.model('FlowChart', FlowChartSchema);
 
