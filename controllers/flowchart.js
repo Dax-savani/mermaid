@@ -152,9 +152,10 @@ const handleCreateFlowChart = asyncHandler(async (req, res) => {
 
 const handleGetAllFlowCharts = asyncHandler(async (req, res) => {
     try {
-        const flowCharts = await FlowChart.find({})
+        const flowCharts = await FlowChart.find({ user_id: req.user._id })
             .populate('user_id')
-            .sort({createdAt: -1});
+            .sort({ createdAt: -1 });
+
         res.status(200).json({
             status: 200,
             message: 'FlowCharts fetched successfully',
@@ -169,6 +170,7 @@ const handleGetAllFlowCharts = asyncHandler(async (req, res) => {
         });
     }
 });
+
 
 // Get FlowChart by ID
 const handleGetFlowChartById = asyncHandler(async (req, res) => {
