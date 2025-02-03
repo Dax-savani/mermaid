@@ -15,7 +15,7 @@ const FlowChartSchema = new Schema({
     selectInputMethod: {
         type: String,
         required: false,
-        enum: ['Text/README', 'Voice Recording', 'Upload Audio'],
+        enum: ['Gemini', 'Smart Graph', 'Open AI'],
     },
     aiModel: {
         type: String,
