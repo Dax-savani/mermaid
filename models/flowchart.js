@@ -15,12 +15,12 @@ const FlowChartSchema = new Schema({
     selectInputMethod: {
         type: String,
         required: false,
-        enum: ['Gemini', 'Smart Graph', 'Open AI'],
+        enum: ['Text/README', 'Voice Recording', 'Upload Audio'],
     },
     aiModel: {
         type: String,
         required: true,
-        enum: ['Gemini'],
+        enum: ['Gemini', 'Smart Graph', 'Open AI'],
     },
     textOrMermaid: {
         type: String,
