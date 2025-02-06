@@ -172,7 +172,6 @@ const handleGetAllFlowCharts = asyncHandler(async (req, res) => {
 });
 
 
-// Get FlowChart by ID
 const handleGetFlowChartById = asyncHandler(async (req, res) => {
     try {
         const flowChart = await FlowChart.findById(req.params.id).populate('user_id').sort({createdAt: -1});
@@ -201,18 +200,22 @@ const handleGetFlowChartById = asyncHandler(async (req, res) => {
 
 const handleUpdateFlowChartById = asyncHandler(async (req, res) => {
     try {
-        const {selectInputMethod, aiModel, textOrMermaid, mermaidFile} = req.body;
+        const { mermaidString } = req.body;
+
+        if (!mermaidString) {
+            return res.status(400).json({
+                status: 400,
+                message: 'mermaidString field is required to update.',
+            });
+        }
+
 
         const flowChart = await FlowChart.findByIdAndUpdate(
             req.params.id,
             {
-                user_id: req.user._id,
-                selectInputMethod,
-                aiModel,
-                textOrMermaid,
-                mermaidFile,
+                mermaidString,
             },
-            {new: true}
+            { new: true }
         );
 
         if (!flowChart) {
@@ -237,7 +240,8 @@ const handleUpdateFlowChartById = asyncHandler(async (req, res) => {
     }
 });
 
-// Delete FlowChart by ID with req.user._id
+
+
 const handleDeleteFlowChartById = asyncHandler(async (req, res) => {
     try {
         const flowChart = await FlowChart.findByIdAndDelete(req.params.id);
