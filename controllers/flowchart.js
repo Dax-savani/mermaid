@@ -107,7 +107,7 @@ const handleCreateFlowChart = asyncHandler(async (req, res) => {
         }
 
         const mistralPayload = {
-            inputs: `Generate a clean, simple MermaidJS flowchart which is proper in terms of suitable syntax of mermaid js. do not make any mistakes in this Return only the MermaidJS code, no additional information or verbose descriptions for the following: 
+            inputs:  `Generate a clean, simple MermaidJS flowchart which is proper in terms of suitable syntax of mermaid js. Return only the MermaidJS code, no additional information or verbose descriptions for the following: 
             ${textData}`,
         };
 
