@@ -3,8 +3,10 @@ const FlowChart = require('../models/flowchart');
 const axios = require('axios');
 require('dotenv').config();
 
+// Function to transcribe audio using an external Whisper API
 const transcribeAudio = async (audioBuffer, huggingToken) => {
     try {
+        // Sending the audio buffer to the API for transcription
         const response = await axios.post(
             process.env.WHISPER_API_URL,
             audioBuffer,
@@ -15,6 +17,8 @@ const transcribeAudio = async (audioBuffer, huggingToken) => {
                 },
             }
         );
+
+        // Return transcribed text if request is successful
         if (response.status === 200) {
             return response.data.text || "Transcription not available.";
         } else {
@@ -26,67 +30,38 @@ const transcribeAudio = async (audioBuffer, huggingToken) => {
     }
 };
 
-// function cleanMermaidChart(rawOutput) {
-//     console.log(rawOutput);
-//     const mermaidStart = rawOutput.indexOf('```mermaid');
-//     if (mermaidStart === -1) return "No valid MermaidJS chart found.";
-//     const chartStart = rawOutput.indexOf("graph", mermaidStart)
-//         || rawOutput.indexOf("sequenceDiagram", mermaidStart)
-//         || rawOutput.indexOf("classDiagram", mermaidStart)
-//         || rawOutput.indexOf("pieChart", mermaidStart)
-//         || rawOutput.indexOf("gantt", mermaidStart)
-//         || rawOutput.indexOf("journey", mermaidStart)
-//         || rawOutput.indexOf("stateDiagram", mermaidStart)
-//         || rawOutput.indexOf("erDiagram", mermaidStart)
-//         || rawOutput.indexOf("gitGraph", mermaidStart)
-//         || rawOutput.indexOf("mindmap", mermaidStart)
-//         || rawOutput.indexOf("requirementDiagram", mermaidStart)
-//         || rawOutput.indexOf("flowchart", mermaidStart)
-//         || rawOutput.indexOf("diagram", mermaidStart)
-//         || rawOutput.indexOf("markdown", mermaidStart)
-//         || rawOutput.indexOf("packetDiagram", mermaidStart)
-//         || rawOutput.indexOf("c4Diagram", mermaidStart)
-//         || rawOutput.indexOf("pieDiagram", mermaidStart)
-//         || rawOutput.indexOf("quadrantChart", mermaidStart);
-//
-//     const chartEnd = rawOutput.indexOf('```', chartStart);
-//
-//     if (chartStart !== -1 && chartEnd !== -1) {
-//         return rawOutput.substring(chartStart, chartEnd).trim();
-//     }
-//
-//     return "No valid MermaidJS chart found.";
-// }
-
+// Function to extract and clean MermaidJS chart code from API response
 function cleanMermaidChart(rawOutput) {
     const mermaidStart = rawOutput.indexOf("```mermaid");
     if (mermaidStart === -1) return "No valid MermaidJS chart found.";
 
-    const chartStart = mermaidStart + 10;
-
+    const chartStart = mermaidStart + 10; // Adjust to remove markdown syntax
     const chartEnd = rawOutput.indexOf("``", chartStart);
+
     if (chartEnd === -1) return "No valid MermaidJS chart found.";
 
     return rawOutput.substring(chartStart, chartEnd).trim();
 }
 
-
+// Controller to handle FlowChart creation
 const handleCreateFlowChart = asyncHandler(async (req, res) => {
     try {
-        const {title, selectInputMethod, aiModel, textOrMermaid, mermaidFile} = req.body;
+        const { title, selectInputMethod, aiModel, textOrMermaid, mermaidFile } = req.body;
         const huggingToken = req.headers.huggingtoken;
+
+        // Check if Hugging Face token is provided
         if (!huggingToken) {
             return res.status(400).json({
                 status: 400,
                 message: 'Hugging token not found.',
             });
         }
-        const user_id = req.user._id;
 
-        let file = req.files[0];
-        let apiResponse;
+        const user_id = req.user._id;
+        let file = req.files?.[0];
         let textData = "";
 
+        // Determine input source (text, file, or image)
         if (textOrMermaid) {
             textData = textOrMermaid;
         } else if (file) {
@@ -100,18 +75,20 @@ const handleCreateFlowChart = asyncHandler(async (req, res) => {
                     textData = 'Analyze this image for flowchart data.';
                 }
             } else {
-                return res.status(400).json({message: 'Unsupported file type.'});
+                return res.status(400).json({ message: 'Unsupported file type.' });
             }
         } else {
-            return res.status(400).json({message: 'No input provided.'});
+            return res.status(400).json({ message: 'No input provided.' });
         }
 
+        // Payload for AI model to generate MermaidJS flowchart
         const mistralPayload = {
-            inputs:  `Generate a clean, simple MermaidJS flowchart which is proper in terms of suitable syntax of mermaid js. Return only the MermaidJS code, no additional information or verbose descriptions for the following: 
+            inputs: `Generate a clean, simple MermaidJS flowchart with proper syntax. Return only the MermaidJS code:
             ${textData}`,
         };
 
-        apiResponse = await axios.post(
+        // Call AI model API to generate flowchart
+        const apiResponse = await axios.post(
             process.env.MISTRAL_API_URL,
             mistralPayload,
             {
@@ -121,10 +98,13 @@ const handleCreateFlowChart = asyncHandler(async (req, res) => {
                 },
             }
         );
+
+        // Extract and clean MermaidJS chart from the API response
         const mermaidChart = cleanMermaidChart(apiResponse.data[0].generated_text);
 
+        // Create new FlowChart document and save it to the database
         const flowChart = new FlowChart({
-            title, // Add the title field here
+            title,
             selectInputMethod,
             aiModel,
             textOrMermaid,
@@ -150,11 +130,12 @@ const handleCreateFlowChart = asyncHandler(async (req, res) => {
     }
 });
 
+// Controller to fetch all FlowCharts for the logged-in user
 const handleGetAllFlowCharts = asyncHandler(async (req, res) => {
     try {
         const flowCharts = await FlowChart.find({ user_id: req.user._id })
-            .populate('user_id')
-            .sort({ createdAt: -1 });
+            .populate('user_id') // Populate user details
+            .sort({ createdAt: -1 }); // Sort by newest first
 
         res.status(200).json({
             status: 200,
@@ -171,10 +152,11 @@ const handleGetAllFlowCharts = asyncHandler(async (req, res) => {
     }
 });
 
-
+// Controller to fetch a specific FlowChart by ID
 const handleGetFlowChartById = asyncHandler(async (req, res) => {
     try {
-        const flowChart = await FlowChart.findById(req.params.id).populate('user_id').sort({createdAt: -1});
+        const flowChart = await FlowChart.findById(req.params.id)
+            .populate('user_id');
 
         if (!flowChart) {
             return res.status(404).json({
@@ -198,6 +180,7 @@ const handleGetFlowChartById = asyncHandler(async (req, res) => {
     }
 });
 
+// Controller to update a FlowChart by ID
 const handleUpdateFlowChartById = asyncHandler(async (req, res) => {
     try {
         const { mermaidString } = req.body;
@@ -209,12 +192,9 @@ const handleUpdateFlowChartById = asyncHandler(async (req, res) => {
             });
         }
 
-
         const flowChart = await FlowChart.findByIdAndUpdate(
             req.params.id,
-            {
-                mermaidString,
-            },
+            { mermaidString },
             { new: true }
         );
 
@@ -240,8 +220,7 @@ const handleUpdateFlowChartById = asyncHandler(async (req, res) => {
     }
 });
 
-
-
+// Controller to delete a FlowChart by ID
 const handleDeleteFlowChartById = asyncHandler(async (req, res) => {
     try {
         const flowChart = await FlowChart.findByIdAndDelete(req.params.id);
@@ -267,6 +246,7 @@ const handleDeleteFlowChartById = asyncHandler(async (req, res) => {
     }
 });
 
+// Exporting the handlers for use in route definitions
 module.exports = {
     handleCreateFlowChart,
     handleGetAllFlowCharts,
@@ -274,4 +254,3 @@ module.exports = {
     handleUpdateFlowChartById,
     handleDeleteFlowChartById,
 };
-

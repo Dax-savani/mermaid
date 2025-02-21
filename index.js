@@ -8,9 +8,11 @@ const dotenv = require("dotenv").config();
 const PORT = process.env.PORT || 4000;
 const cookieParser = require('cookie-parser')
 const cors = require('cors');
+
 //routes
 const AuthRoutes = require("./routes/auth");
 const flowChartRouter = require("./routes/flowchart");
+
 //connection to database
 connectionDB(process.env.DB_CONNECTION_STRING);
 
@@ -27,7 +29,6 @@ app.use(cookieParser());
 app.use(express.urlencoded({extended: false}));
 
 //Routes
-
 app.get("/", (req, res) => {
     res.send("Hello From Server");
 });
